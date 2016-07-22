@@ -129,6 +129,12 @@ ui_to_setting (NMConnectionEditor *editor)
 	GtkWidget *widget;
 	const char *name;
 
+	// declare variables
+	GSList *connections, *iter, *next;
+	NMConnection *connection;
+	gboolean settings_has_id = FALSE;
+	const char *connection_id;
+
 	s_con = nm_connection_get_setting_connection (editor->connection);
 	g_assert (s_con);
 
@@ -138,7 +144,24 @@ ui_to_setting (NMConnectionEditor *editor)
 	g_object_set (G_OBJECT (s_con), NM_SETTING_CONNECTION_ID, name, NULL);
 	nm_connection_editor_update_title (editor);
 
-	if (!name || !strlen (name))
+	/* 
+	 * get connections from settings
+	 * can see this in applet_get_all_connections  -- --  src/applet.c
+	 */
+	connections = nm_remote_settings_list_connections (editor->settings);
+	for (iter = connections; iter; iter = next) {
+		connection = iter->data;
+		// get id from connection
+		connection_id = nm_connection_get_id ( connection);
+		next = iter->next;
+		// if name == id
+		if ( strcmp( name, connection_id) == 0) {
+			settings_has_id = TRUE;
+			break;
+		}
+	}
+
+	if (!name || !strlen (name) || settings_has_id)
 		return FALSE;
 
 	return TRUE;
