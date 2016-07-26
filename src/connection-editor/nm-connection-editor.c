@@ -77,6 +77,8 @@
 #include "ce-polkit-button.h"
 #include "vpn-helpers.h"
 
+ // #include <syslog.h>
+
 G_DEFINE_TYPE (NMConnectionEditor, nm_connection_editor, G_TYPE_OBJECT)
 
 enum {
@@ -134,6 +136,9 @@ ui_to_setting (NMConnectionEditor *editor)
 	NMConnection *connection;
 	gboolean settings_has_id = FALSE;
 	const char *connection_id;
+	const char *uuid;
+	const char *connection_uuid;
+	// openlog("network-manager-applet", LOG_CONS | LOG_PID, 0);
 
 	s_con = nm_connection_get_setting_connection (editor->connection);
 	g_assert (s_con);
@@ -144,6 +149,9 @@ ui_to_setting (NMConnectionEditor *editor)
 	g_object_set (G_OBJECT (s_con), NM_SETTING_CONNECTION_ID, name, NULL);
 	nm_connection_editor_update_title (editor);
 
+	uuid = nm_connection_get_uuid(editor->connection);
+	// syslog(LOG_USER | LOG_INFO, "name: %s", name);
+	// syslog(LOG_USER | LOG_INFO, "uuid: %s", uuid);
 	/* 
 	 * get connections from settings
 	 * can see this in applet_get_all_connections  -- --  src/applet.c
@@ -153,12 +161,16 @@ ui_to_setting (NMConnectionEditor *editor)
 		connection = iter->data;
 		// get id from connection
 		connection_id = nm_connection_get_id ( connection);
+		connection_uuid = nm_connection_get_uuid ( connection);
 		next = iter->next;
-		// if name == id
-		if ( strcmp( name, connection_id) == 0) {
+		// syslog(LOG_USER | LOG_INFO, "id: %s", connection_id);
+		// syslog(LOG_USER | LOG_INFO, "connection uuid: %s", connection_uuid);
+		// if name == id && uuid != con_uuid
+		if (( strcmp( name, connection_id) == 0) && ( !strcmp( uuid, connection_uuid) == 0) ) {
 			settings_has_id = TRUE;
 			break;
 		}
+
 	}
 
 	if (!name || !strlen (name) || settings_has_id)
